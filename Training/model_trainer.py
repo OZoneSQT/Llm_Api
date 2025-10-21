@@ -4,9 +4,11 @@ from datasets import concatenate_datasets
 
 import subprocess
 import json
+import torch
+import time
 
 # Read config from config.json
-with open("config.json", "r", encoding="utf-8") as f:
+with open("./Training/data/config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
 
@@ -29,7 +31,8 @@ with open("./Training/data/dataset.txt", "r", encoding="utf-8") as f:
 
 # Concatenate them
 datasets = [load_dataset(name) for name in dataset_names]
-combined_dataset = concatenate_datasets(datasets)
+train_datasets = [ds['train'] for ds in datasets]
+combined_dataset = concatenate_datasets(train_datasets)
 
 # Add RAG dataset if needed
 if useRagDate:
@@ -76,27 +79,53 @@ if instruction:
 ### Setup model and tokenizer ###
 #################################
 
+# Check CUDA availability and set device
+print("CUDA available:", torch.cuda.is_available())
+print("CUDA device count:", torch.cuda.device_count())
+
 # Load model and tokenizer
 model = AutoModelForCausalLM.from_pretrained(config.get("llm_model_name", "gpt2"))
 tokenizer = AutoTokenizer.from_pretrained(config.get("tokenizer_model", "gpt2"))
 
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"  # For Apple Silicon (M1/M2)
+elif torch.has_mps:
+    device = "mps"  # Alternative check for MPS
+elif torch.backends.opencl.is_available():
+    device = "opencl"  # For some AMD/Intel GPUs (experimental, rarely supported)
+else:
+    device = "cpu"
+model.to(device)
+
 # Define the tokenize function before using it
 def tokenize_function(examples):
-    return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=128)
+    tokens = tokenizer(
+        examples["text"],
+        truncation=True,
+        padding="max_length",
+        max_length=128,
+    )
+    tokens["labels"] = tokens["input_ids"].copy()
+    return tokens
+
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token  # or use tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
 # Tokenize the combined dataset
 tokenized_combined = combined_dataset.map(tokenize_function, batched=True)
 
 # Training arguments
+# Note: On a RTX3080 it utiliztise around 10GB VRAM on 1.6M dataset
 training_args = TrainingArguments(
-    output_dir="my-model",
-    num_train_epochs=config.get("num_train_epochs", 1),
-    per_device_train_batch_size=config.get("per_device_train_batch_size", 2),
-    per_device_eval_batch_size=config.get("per_device_eval_batch_size", 2),
-    evaluation_strategy=config.get("evaluation_strategy", "epoch"),
-    save_strategy=config.get("save_strategy", "epoch"),
-    logging_steps=config.get("logging_steps", 10),
-    fp16_full_eval=True
+    output_dir="my-model",                                                      # Directory to save model checkpoints and final model
+    num_train_epochs=config.get("num_train_epochs", 2),                         # Number of training epochs (default 2 if not in config).
+    per_device_train_batch_size=config.get("per_device_train_batch_size", 4),   # Batch size per device (GPU/CPU) during training. Default is 4.
+    per_device_eval_batch_size=config.get("per_device_eval_batch_size", 4),     # Batch size per device during evaluation. Default is 4.
+    save_strategy=config.get("save_strategy", "epoch"),                         # When to save checkpoints: "epoch" saves at the end of each epoch.
+    logging_steps=config.get("logging_steps", 10),                              # Log metrics every N steps. Default is 10.
+    fp16=True                                                                   # Enables full precision evaluation with mixed precision (FP16).
 )
 
 # Split tokenized_combined into train and eval sets
@@ -113,9 +142,23 @@ trainer = Trainer(
 )
 
 
-###############
-### Execute ###
-###############
+###########################
+### Execute and logging ###
+###########################
+
+# Logging
+logfile_path = "my-model/buildlog.log"
+start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+# Log Dataset info
+with open(logfile_path, "w", encoding="utf-8") as logf:
+    logf.write(f"Start timestamp: {start_time}\n")
+    logf.write(f"Combined dataset size: {len(combined_dataset)}\n")
+    logf.write("Sample lines from dataset:\n")
+    for i, example in enumerate(combined_dataset):
+        if i >= 10:
+            break
+        logf.write(f"{i+1}: {example.get('text', '')}\n")
 
 # Train
 trainer.train()
@@ -123,3 +166,9 @@ trainer.train()
 # Save model and tokenizer
 model.save_pretrained("my-model")
 tokenizer.save_pretrained("my-model")
+
+# Log end time
+end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+with open(logfile_path, "a", encoding="utf-8") as logf:
+    logf.write(f"End timestamp: {end_time}\n")
+    logf.write(f"Total training time: {end_time - start_time}\n")
