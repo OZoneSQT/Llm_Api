@@ -23,7 +23,7 @@ Projece is made by a series of micro services; a client, sends a promt to a llm,
 - run.ps1: Restart main service.
 
 
-# Training
+## Training
 Projece is to train/tune and then export the model to *.GUFF format
 - dep_install_traning.ps1: Install dependices (Jackhammer-style).
 - dep_updater_traning.ps1: Update dependices.
