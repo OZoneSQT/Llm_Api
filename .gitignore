@@ -425,8 +425,8 @@ FodyWeavers.xsd
 /lib/transformers/
 /Service/vector_store/docs.json
 /Service/vector_store/index.faiss
-/Traning/data/docs.json
-/Traning/data/index.faiss
+/Training/data/docs.json
+/Training/data/index.faiss
 /wheelhouse/aiohappyeyeballs-2.6.1-py3-none-any.whl
 /wheelhouse/aiohttp-3.13.1-cp311-cp311-win_amd64.whl
 /wheelhouse/aiosignal-1.4.0-py3-none-any.whl

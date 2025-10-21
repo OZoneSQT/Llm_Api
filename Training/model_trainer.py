@@ -1,37 +1,38 @@
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 from datasets import load_dataset
 from datasets import concatenate_datasets
 
-# model_tuner.py
+import subprocess
+import json
+
+# Read config from config.json
+with open("config.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
 
 
 ######################
 ### Setup datasets ###
 ######################
 
-# Load your dataset
-# Load your local JSON file
-rag_dataset = load_dataset("json", data_files={"train": "./Traning/data/docs.json"})
+# Load RAG dataset
+useRagDate = config.get('useRagDate', True)
 
-if len(rag_dataset) > 0:
-    # If convert to dicts with a 'text' field
-    if isinstance(rag_dataset["train"][0], str):
-        dataset = rag_dataset.map(lambda x: {"text": x} if isinstance(x, str) else x)
-
-# Load a public dataset, e.g. IMDb
-dataset = load_dataset("imdb")
+if useRagDate:
+    subprocess.run(["python", "./Training/build_dk.py"], check=True)
+    rag_dataset = load_dataset("json", data_files={"train": "./Training/data/docs.json"})
 
 # Login using e.g. `huggingface-cli login` to access this dataset
 
 # Load each dataset from "dataset.txt", one per line
-with open("./Traning/data/dataset.txt", "r", encoding="utf-8") as f:
+with open("./Training/data/dataset.txt", "r", encoding="utf-8") as f:
     dataset_names = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
 # Concatenate them
 datasets = [load_dataset(name) for name in dataset_names]
 combined_dataset = concatenate_datasets(datasets)
 
-if len(rag_dataset) > 0:
+# Add RAG dataset if needed
+if useRagDate:
     combined_dataset = concatenate_datasets([combined_dataset, rag_dataset["train"]])
 
 # Guard against empty datasets
@@ -48,7 +49,7 @@ def load_banned_words(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         return [line.strip().lower() for line in f if line.strip() and not line.startswith('#')]
 
-banned_words = load_banned_words('./Traning/data/banned_words.txt')
+banned_words = load_banned_words('./Training/data/banned_words.txt')
 def is_safe(example):
     text = example.get("text", "").lower()
     return not any(bad_word in text for bad_word in banned_words)
@@ -62,7 +63,7 @@ if banned_words:
 ################################
 
 # Add instruction prefix to each sample
-instruction = "Instruction: Answer as a drunk sailor.\n"
+instruction = config.get("instruction_prefix", "Instruction: Answer as a drunk sailor.\n")
 def add_instruction(example):
     example["text"] = instruction + example.get("text", "")
     return example
@@ -75,34 +76,40 @@ if instruction:
 ### Setup model and tokenizer ###
 #################################
 
-# Load pre-trained model and tokenizer
-model_name = "distilbert-base-uncased"  # Replace with your model
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+# Load model and tokenizer
+model = AutoModelForCausalLM.from_pretrained(config.get("llm_model_name", "gpt2"))
+tokenizer = AutoTokenizer.from_pretrained(config.get("tokenizer_model", "gpt2"))
 
-# Tokenize the dataset
+# Define the tokenize function before using it
 def tokenize_function(examples):
     return tokenizer(examples["text"], truncation=True, padding="max_length", max_length=128)
 
-tokenized_datasets = combined_dataset.map(tokenize_function, batched=True)
+# Tokenize the combined dataset
+tokenized_combined = combined_dataset.map(tokenize_function, batched=True)
 
 # Training arguments
 training_args = TrainingArguments(
-    output_dir="./results",
-    evaluation_strategy="epoch",
-    learning_rate=2e-5,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=8,
-    num_train_epochs=2,
-    weight_decay=0.01,
+    output_dir="my-model",
+    num_train_epochs=config.get("num_train_epochs", 1),
+    per_device_train_batch_size=config.get("per_device_train_batch_size", 2),
+    per_device_eval_batch_size=config.get("per_device_eval_batch_size", 2),
+    evaluation_strategy=config.get("evaluation_strategy", "epoch"),
+    save_strategy=config.get("save_strategy", "epoch"),
+    logging_steps=config.get("logging_steps", 10),
+    fp16_full_eval=True
 )
+
+# Split tokenized_combined into train and eval sets
+split = tokenized_combined.train_test_split(test_size=0.1)
+train_ds = split['train']
+eval_ds = split['test']
 
 # Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=tokenized_datasets["train"].shuffle(seed=42).select(range(2000)),  # Small subset for demo
-    eval_dataset=tokenized_datasets["test"].shuffle(seed=42).select(range(500)),
+    train_dataset=train_ds,
+    eval_dataset=eval_ds,
 )
 
 
@@ -110,9 +117,9 @@ trainer = Trainer(
 ### Execute ###
 ###############
 
-# Train the model
+# Train
 trainer.train()
 
-# Save the tuned model
-model.save_pretrained("./tuned_model")
-tokenizer.save_pretrained("./tuned_model")
+# Save model and tokenizer
+model.save_pretrained("my-model")
+tokenizer.save_pretrained("my-model")

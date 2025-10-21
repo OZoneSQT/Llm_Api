@@ -5,6 +5,10 @@ import json
 import os
 import glob
 import PyPDF2
+import PyPDF2
+import ebooklib
+from ebooklib import epub
+import mobi
 
 # Sample documents
 #documents = [
@@ -18,14 +22,14 @@ import PyPDF2
 documents = []
 
 # Load TXT files (each file as one document)
-for txt_path in glob.glob("docs_folder/*.txt"):
+for txt_path in glob.glob("docs_folder/*.txt") + glob.glob("docs_folder/*.TXTB"):
     with open(txt_path, "r", encoding="utf-8") as f:
         text = f.read().strip()
         if text:
             documents.append(text)
 
 # Load PDF files (each file as one document)
-for pdf_path in glob.glob("docs_folder/*.pdf"):
+for pdf_path in glob.glob("docs_folder/*.pdf") + glob.glob("docs_folder/*.PDF"):
     with open(pdf_path, "rb") as f:
         reader = PyPDF2.PdfReader(f)
         text = ""
@@ -35,6 +39,24 @@ for pdf_path in glob.glob("docs_folder/*.pdf"):
                 text += page_text
         if text.strip():
             documents.append(text.strip())
+
+# Load EPUB files (each file as one document)
+for epub_path in glob.glob("docs_folder/*.epub") + glob.glob("docs_folder/*.EPUB"):
+    book = epub.read_epub(epub_path)
+    text = ""
+    for item in book.get_items():
+        if item.get_type() == ebooklib.ITEM_DOCUMENT:
+            text += item.get_body_content_str()
+    if text.strip():
+        documents.append(text.strip())
+
+# Load MOBI files (each file as one document)
+for mobi_path in glob.glob("docs_folder/*.mobi") + glob.glob("docs_folder/*.MOBI"):
+    book = mobi.Mobi(mobi_path)
+    book.parse()
+    text = book.get_text()
+    if text.strip():
+        documents.append(text.strip())
 
 if not documents:
     print("No documents found. Skipping RAG.")
