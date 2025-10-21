@@ -8,7 +8,7 @@ Diffrent scripts used to acces an instance of ollama, to be implimented into app
 
 
 ## Service
-Projece is made by a series of micro services; a client, sends a promt to a llm, through a RAG.
+Project is made by a series of micro services; a client, sends a promt to a llm, through a RAG.
 - dep_download.ps1: Download dependicis for later offline/controlled setup.
 - dep_install_service.ps1: Install dependices from wheelhouse.
 - data-folder: Holds generated data.
@@ -24,7 +24,7 @@ Projece is made by a series of micro services; a client, sends a promt to a llm,
 
 
 ## Training
-Projece is to train/tune and then export the model to *.GUFF format
+Project is to train/tune and then export the model to *.GUFF format
 - dep_install_traning.ps1: Install dependices (Jackhammer-style).
 - dep_updater_traning.ps1: Update dependices.
 - data-folder: Holds configuration, and generated data.
