@@ -1,0 +1,1 @@
+python Service/build_index.py

@@ -1,0 +1,1 @@
+Invoke-WebRequest "http://127.0.0.1:8080/ask?query=What is CE marking?" | Select-Object -ExpandProperty Content
