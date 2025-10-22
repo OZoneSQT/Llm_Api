@@ -1,7 +1,7 @@
 # Llm_Api
 This project is a mix of smaller projects, testing llm and AI models
 - There is PowerShell scripts to setup dependices, for the enviorment.
-
+- Project is tested with Python ver. 3.13.9
 
 ## ApiCall
 Diffrent scripts used to acces an instance of ollama, to be implimented into applications.
@@ -28,8 +28,8 @@ Project is to train/tune and then export the model to *.GUFF format
 - dep_install_traning.ps1: Install dependices (Jackhammer-style).
 - dep_updater_traning.ps1: Update dependices.
 - data-folder: Holds configuration, and generated data.
-- doc_folder-folder: Takes data in *.txt, *.pdf, *.epub, *.mobi used for RAG data.
-- build_db.ps1 is uset to execute build_index.py, to generate the RAG Vector database from provided data.
+- doc_folder-folder: Takes data in *.txt, *.pdf, *.epub, *.mobi, *.doc, *.docx used to generate custom dataset.
+- dataset_generator.py: Can generate a custom dataset from files in the doc_folder-folder.
 - train_model.ps1: Sets parameters for model_trainer.py, to train a model
-- tune_model.ps1: Sets parameters for model_tuner.py, to tune pretrained model
+- tune_model.ps1: Sets parameters for model_tuner.py, to tune pretrained model.
 - exportToGUFF.ps1: Sets parameters for convert.py, to convert generated model to *.GUFF format
