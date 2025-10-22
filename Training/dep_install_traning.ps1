@@ -49,3 +49,17 @@ git clone https://github.com/huggingface/optimum.git
 Set-Location .\optimum
 pip install .
 Set-Location ..\..
+
+pip install PyPDF2
+pip install ebooklib
+pip install mobi
+pip install glob
+pip install os
+pip install json
+pip install torch
+pip install time
+pip install datetime
+pip install python-docx
+python -m pip install --upgrade "pip<24.1"
+pip install textract
+python -m pip install --upgrade pip

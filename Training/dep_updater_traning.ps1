@@ -35,3 +35,16 @@ git pull
 pip install --upgrade .
 
 Set-Location .\
+
+pip install --upgrade PyPDF2
+pip install --upgrade ebooklib
+pip install --upgrade mobi
+pip install --upgrade glob
+pip install --upgrade os
+pip install --upgrade json
+pip install --upgrade torch
+pip install --upgrade time
+pip install --upgrade datetime
+pip install --upgrade python-docx
+pip install --upgrade textract
+python -m pip install --upgrade pip

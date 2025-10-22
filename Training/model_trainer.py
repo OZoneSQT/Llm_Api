@@ -1,8 +1,9 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 from datasets import load_dataset
 from datasets import concatenate_datasets
-
-import subprocess
+from datasets import Dataset
+import glob
+import os
 import json
 import torch
 import time
@@ -16,12 +17,24 @@ with open("./Training/data/config.json", "r", encoding="utf-8") as f:
 ### Setup datasets ###
 ######################
 
-# Load RAG dataset
-useRagDate = config.get('useRagDate', True)
+# Local data
 
-if useRagDate:
-    subprocess.run(["python", "./Training/build_dk.py"], check=True)
-    rag_dataset = load_dataset("json", data_files={"train": "./Training/data/docs.json"})
+script_dir = os.path.dirname(os.path.abspath(__file__))
+output_dir = os.path.join(script_dir, "data")
+os.makedirs(output_dir, exist_ok=True)
+
+
+# Load custom dataset from disk if exists
+# if os.path.exists("custom_dataset"):
+# Find the latest custom_dataset_* folder and load it
+custom_dataset_dirs = glob.glob("./datasets/custom_dataset_*")
+if custom_dataset_dirs:
+    latest_dir = max(custom_dataset_dirs, key=os.path.getmtime)
+    custom_loaded_dataset = Dataset.load_from_disk(latest_dir)
+
+
+# Create Hugging Face Dataset
+# Load datasets from Hugging Face
 
 # Login using e.g. `huggingface-cli login` to access this dataset
 
@@ -29,18 +42,21 @@ if useRagDate:
 with open("./Training/data/dataset.txt", "r", encoding="utf-8") as f:
     dataset_names = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
-# Concatenate them
 datasets = [load_dataset(name) for name in dataset_names]
-train_datasets = [ds['train'] for ds in datasets]
-combined_dataset = concatenate_datasets(train_datasets)
 
-# Add RAG dataset if needed
-if useRagDate:
-    combined_dataset = concatenate_datasets([combined_dataset, rag_dataset["train"]])
+
+# Concatenate datasets
+if datasets:
+    train_datasets = [ds['train'] for ds in datasets]
+    combined_dataset = concatenate_datasets(train_datasets)
+
+if custom_dataset_dirs:
+    combined_dataset = concatenate_datasets([combined_dataset, custom_loaded_dataset]) if (datasets) else custom_loaded_dataset
 
 # Guard against empty datasets
 if len(combined_dataset) == 0:
     raise ValueError("The combined dataset is empty. Please check the input datasets.")
+    exit(1)
 
 
 ###################
@@ -117,7 +133,7 @@ if tokenizer.pad_token is None:
 tokenized_combined = combined_dataset.map(tokenize_function, batched=True)
 
 # Training arguments
-# Note: On a RTX3080 it utiliztise around 10GB VRAM on 1.6M dataset
+# Note: On a RTX3080 it utiliztise around 4.9 GB VRAM on 1.3 M dataset
 training_args = TrainingArguments(
     output_dir="my-model",                                                      # Directory to save model checkpoints and final model
     num_train_epochs=config.get("num_train_epochs", 2),                         # Number of training epochs (default 2 if not in config).
@@ -125,7 +141,7 @@ training_args = TrainingArguments(
     per_device_eval_batch_size=config.get("per_device_eval_batch_size", 4),     # Batch size per device during evaluation. Default is 4.
     save_strategy=config.get("save_strategy", "epoch"),                         # When to save checkpoints: "epoch" saves at the end of each epoch.
     logging_steps=config.get("logging_steps", 10),                              # Log metrics every N steps. Default is 10.
-    fp16=True                                                                   # Enables full precision evaluation with mixed precision (FP16).
+    fp16=True                                                                   # Enables mixed precision (FP16).
 )
 
 # Split tokenized_combined into train and eval sets
@@ -154,11 +170,6 @@ start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 with open(logfile_path, "w", encoding="utf-8") as logf:
     logf.write(f"Start timestamp: {start_time}\n")
     logf.write(f"Combined dataset size: {len(combined_dataset)}\n")
-    logf.write("Sample lines from dataset:\n")
-    for i, example in enumerate(combined_dataset):
-        if i >= 10:
-            break
-        logf.write(f"{i+1}: {example.get('text', '')}\n")
 
 # Train
 trainer.train()
