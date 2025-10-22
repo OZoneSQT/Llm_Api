@@ -25,8 +25,8 @@ Project is made by a series of micro services; a client, sends a promt to a llm,
 
 ## Training
 Project is to train/tune and then export the model to *.GUFF format
-- dep_install_traning.ps1: Install dependices (Jackhammer-style).
-- dep_updater_traning.ps1: Update dependices.
+- dep_install_training.ps1: Install dependices (Jackhammer-style).
+- dep_updater_training.ps1: Update dependices.
 - data-folder: Holds configuration, and generated data.
 - doc_folder-folder: Takes data in *.txt, *.pdf, *.epub, *.mobi, *.doc, *.docx used to generate custom dataset.
 - dataset_generator.py: Can generate a custom dataset from files in the doc_folder-folder.
