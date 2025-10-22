@@ -1,6 +1,8 @@
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
 from datasets import load_dataset
 from datasets import concatenate_datasets
+import glob
+import os
 
 # model_tuner.py
 
@@ -9,17 +11,24 @@ from datasets import concatenate_datasets
 ### Setup datasets ###
 ######################
 
-# Load your dataset
-# Load your local JSON file
-rag_dataset = load_dataset("json", data_files={"train": "./Training/data/docs.json"})
+# Local data
 
-if len(rag_dataset) > 0:
-    # If convert to dicts with a 'text' field
-    if isinstance(rag_dataset["train"][0], str):
-        dataset = rag_dataset.map(lambda x: {"text": x} if isinstance(x, str) else x)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+output_dir = os.path.join(script_dir, "data")
+os.makedirs(output_dir, exist_ok=True)
 
-# Load a public dataset, e.g. IMDb
-dataset = load_dataset("imdb")
+
+# Load custom dataset from disk if exists
+# if os.path.exists("custom_dataset"):
+# Find the latest custom_dataset_* folder and load it
+custom_dataset_dirs = glob.glob("./datasets/custom_dataset_*")
+if custom_dataset_dirs:
+    latest_dir = max(custom_dataset_dirs, key=os.path.getmtime)
+    custom_loaded_dataset = Dataset.load_from_disk(latest_dir)
+
+
+# Create Hugging Face Dataset
+# Load datasets from Hugging Face
 
 # Login using e.g. `huggingface-cli login` to access this dataset
 
@@ -27,12 +36,16 @@ dataset = load_dataset("imdb")
 with open("./Training/data/dataset.txt", "r", encoding="utf-8") as f:
     dataset_names = [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
-# Concatenate them
 datasets = [load_dataset(name) for name in dataset_names]
-combined_dataset = concatenate_datasets(datasets)
 
-if len(rag_dataset) > 0:
-    combined_dataset = concatenate_datasets([combined_dataset, rag_dataset["train"]])
+
+# Concatenate datasets
+if datasets:
+    train_datasets = [ds['train'] for ds in datasets]
+    combined_dataset = concatenate_datasets(train_datasets)
+
+if custom_dataset_dirs:
+    combined_dataset = concatenate_datasets([combined_dataset, custom_loaded_dataset]) if (datasets) else custom_loaded_dataset
 
 # Guard against empty datasets
 if len(combined_dataset) == 0:
