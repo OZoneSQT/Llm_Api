@@ -63,3 +63,11 @@ pip install python-docx
 python -m pip install --upgrade "pip<24.1"
 pip install textract
 python -m pip install --upgrade pip
+pip install --upgrade six
+
+if (!(Test-Path "$PSScriptRoot/data")) {
+	New-Item -ItemType Directory -Path "$PSScriptRoot/data" | Out-Null
+}
+if (!(Test-Path "$PSScriptRoot/doc_folder")) {
+	New-Item -ItemType Directory -Path "$PSScriptRoot/doc_folder" | Out-Null
+}

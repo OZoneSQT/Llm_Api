@@ -6,6 +6,7 @@ $timestampFile = "last_updated.txt"
 if (Test-Path $LibraryPath) {
     Remove-Item $LibraryPath -Recurse -Force
 }
+
 New-Item -ItemType Directory -Path $LibraryPath | Out-Null
 
 python -m pip download --dest $LibraryPath `

@@ -1,4 +1,4 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments, DataCollatorForLanguageModeling
 from datasets import load_dataset
 from datasets import concatenate_datasets
 from datasets import Dataset
@@ -59,7 +59,6 @@ if custom_dataset_dirs:
 # Guard against empty datasets
 if len(combined_dataset) == 0:
     raise ValueError("The combined dataset is empty. Please check the input datasets.")
-    exit(1)
 
 
 ###################
@@ -79,6 +78,13 @@ def is_safe(example):
 if banned_words:
     combined_dataset = combined_dataset.filter(is_safe)
 
+
+# Remove empty lines and lines starting with "*" or "#"
+def is_valid_line(example):
+    text = example.get("text", "").strip()
+    return text and not (text.startswith("#"))
+
+combined_dataset = combined_dataset.filter(is_valid_line)
 
 ################################
 ### Set instruction datasets ###
@@ -118,13 +124,15 @@ else:
     device = "cpu"
 model.to(device)
 
-# Define the tokenize function before using it
+instruction_token_length = len(tokenizer(instruction)["input_ids"])
+max_token_length = instruction_token_length + 256  # or more if needed
+
 def tokenize_function(examples):
     tokens = tokenizer(
         examples["text"],
         truncation=True,
-        padding="max_length",
-        max_length=128,
+        padding='max_length',
+        max_length=max_token_length,
     )
     tokens["labels"] = tokens["input_ids"].copy()
     return tokens
@@ -152,12 +160,19 @@ split = tokenized_combined.train_test_split(test_size=0.1)
 train_ds = split['train']
 eval_ds = split['test']
 
+# Setup data collator for language modeling
+data_collator = DataCollatorForLanguageModeling(
+    tokenizer=tokenizer,
+    mlm=False  # For causal LM (GPT-2, Llama, etc.)
+)
+
 # Trainer
 trainer = Trainer(
     model=model,
     args=training_args,
     train_dataset=train_ds,
     eval_dataset=eval_ds,
+    data_collator=data_collator,
 )
 
 
@@ -173,6 +188,11 @@ start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 with open(logfile_path, "w", encoding="utf-8") as logf:
     logf.write(f"Start timestamp: {start_time}\n")
     logf.write(f"Combined dataset size: {len(combined_dataset)}\n")
+    logf.write("Sample lines from dataset:\n")
+    for i, example in enumerate(combined_dataset):
+        if i >= 10:
+            break
+        logf.write(f"{i+1}: {example.get('text', '')}\n")
 
 # Train
 trainer.train()

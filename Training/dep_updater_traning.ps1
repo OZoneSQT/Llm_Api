@@ -47,4 +47,6 @@ pip install --upgrade time
 pip install --upgrade datetime
 pip install --upgrade python-docx
 pip install --upgrade textract
+pip install --upgrade six
 python -m pip install --upgrade pip
+
