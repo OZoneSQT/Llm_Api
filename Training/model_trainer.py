@@ -86,12 +86,14 @@ def is_valid_line(example):
 
 combined_dataset = combined_dataset.filter(is_valid_line)
 
+
 ################################
 ### Set instruction datasets ###
 ################################
 
 # Add instruction prefix to each sample
 instruction = config.get("instruction_prefix", "Instruction: Answer as a drunk sailor.\n")
+
 def add_instruction(example):
     example["text"] = instruction + example.get("text", "")
     return example
@@ -104,13 +106,38 @@ if instruction:
 ### Setup model and tokenizer ###
 #################################
 
+# Retrieve model and tokenizer names
+model_name = config.get("llm_model_name", "gpt2")
+tokenizer_name = config.get("llm_tokenizer_name", "gpt2")
+model_type = config.get("llm_model_type", "causal_lm")
+
+# Set model, tokenizer, and initialize additional libraries
+if model_name.startswith("marian"):
+    from transformers import MarianMTModel, MarianTokenizer
+    model = MarianMTModel.from_pretrained(model_name)
+    tokenizer = MarianTokenizer.from_pretrained(model_name)
+
+elif model_type == "causal_lm":
+    model = AutoModelForCausalLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+
+elif model_type == "seq2seq_lm":
+    from transformers import AutoModelForSeq2SeqLM
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+
+elif model_type == "classification":
+    from transformers import AutoModelForSequenceClassification
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+
+
+
+#########################################################################################################################
+
 # Check CUDA availability and set device
 print("CUDA available:", torch.cuda.is_available())
 print("CUDA device count:", torch.cuda.device_count())
-
-# Load model and tokenizer
-model = AutoModelForCausalLM.from_pretrained(config.get("llm_model_name", "gpt2"))
-tokenizer = AutoTokenizer.from_pretrained(config.get("tokenizer_model", "gpt2"))
 
 if torch.cuda.is_available():
     device = "cuda"
