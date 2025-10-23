@@ -29,7 +29,6 @@ Project is to train/tune and then export the model to *.GUFF format
 - dep_updater_training.ps1: Update dependices.
 - data-folder: Holds configuration, and generated data.
 - doc_folder-folder: Takes data in *.txt, *.pdf, *.epub, *.mobi, *.doc, *.docx used to generate custom dataset.
-- dataset_generator.py: Can generate a custom dataset from files in the doc_folder-folder.
-- train_model.ps1: Sets parameters for model_trainer.py, to train a model
-- tune_model.ps1: Sets parameters for model_tuner.py, to tune pretrained model.
-- exportToGUFF.ps1: Sets parameters for convert.py, to convert generated model to *.GUFF format
+- generate_dataset.ps1: executes dataset_generator.py: Can generate a custom dataset from files in the doc_folder-folder.
+- train_model.ps1: Runs parameters for model_trainer.py, to train a model
+- exportToGGUF.ps1: Convert generated model to *.GGUF format using the llama.cpp framework
