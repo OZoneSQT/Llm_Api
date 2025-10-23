@@ -1,2 +1,2 @@
-hellosimple/dataset-demo
-cssddnnc/sd_finetune_demo
+#hellosimple/dataset-demo
+#cssddnnc/sd_finetune_demo

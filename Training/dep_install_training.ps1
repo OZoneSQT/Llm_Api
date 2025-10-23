@@ -64,6 +64,9 @@ python -m pip install --upgrade "pip<24.1"
 pip install textract
 python -m pip install --upgrade pip
 pip install --upgrade six
+pip install mistral-common
+pip install huggingface_hub[hf_xet]
+pip install bitsandbytes
 
 if (!(Test-Path "$PSScriptRoot/data")) {
 	New-Item -ItemType Directory -Path "$PSScriptRoot/data" | Out-Null

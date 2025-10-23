@@ -1,13 +1,18 @@
 {
   "useRagDate": true,
+  "add_local_dataset": true,
+  "local_dataset_path": "./dataset/custom_dataset_20251022_135728",
+  "model_ID": "custom-chat-model",
+  "add_instruction": false,
   "instruction": "Instruction: Answer as a philosophy teacher.\n",
-  "llm_model_name": "gpt2",
-  "tokenizer_model": "gpt2",
+  "llm_model_name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
+  "tokenizer_model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
   "llm_model_type": "causal_lm",
-  "num_train_epochs": 2,
+  "num_train_epochs": 10,
   "per_device_train_batch_size": 4,
   "per_device_eval_batch_size": 4,
   "evaluation_strategy": "epoch",
-  "save_strategy": "epoch",
-  "logging_steps": 10
+  "logging_steps": 10,
+  "learning_rate": 2e-5,
+  "weight_decay": 0.01
 }

@@ -48,5 +48,7 @@ pip install --upgrade datetime
 pip install --upgrade python-docx
 pip install --upgrade textract
 pip install --upgrade six
+pip install --upgrade mistral-common
+pip install --upgrade huggingface_hub[hf_xet]
+pip install --upgrade bitsandbytes
 python -m pip install --upgrade pip
-

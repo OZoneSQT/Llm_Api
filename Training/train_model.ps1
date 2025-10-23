@@ -1,1 +1,1 @@
-python Training/model_trainer.py
+& python model_trainer.py
