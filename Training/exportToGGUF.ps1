@@ -1,6 +1,15 @@
 # Configuration
-$conversionScriptPath = "..\lib\llama.cpp\convert_hf_to_gguf.py"
-$modelOutputPath = "..\models"
+
+# Get parent folder of the script
+$parentFolder = Join-Path $PSScriptRoot ".."
+
+# Or, use Resolve-Path for absolute path
+$parentFolder = (Resolve-Path "$PSScriptRoot\\..").Path
+
+# Use in your paths
+$conversionScriptPath = Join-Path $parentFolder "lib\\llama.cpp\\convert_hf_to_gguf.py"
+$modelOutputPath = Join-Path $parentFolder "pretrained-models\\"
+$modelSrcPath = Join-Path $parentFolder "models\\latest\\"
 
 ###########################################################################
 ###########################################################################
@@ -27,26 +36,34 @@ $outType = Read-Host "Enter output type"
 # Guard against invalid input
 $validTypes = @("f32", "f16", "bf16", "q8_0", "tq2_0", "tq1_0", "auto")
 if ($validTypes -notcontains $outType) {
-    Write-Host "Error: Please choose a valid output type: $($validTypes -join ', ')"
+    Write-Host "Error: Please choose a valid output type, options are: $($validTypes -join ', ')"
     $outType = Read-Host "Enter output type"
 }
 
 # Set output filename (include output type)
 $outFile = "$modelName" + "_" + "$outType" + ".gguf"
 $outFolder = "$modelName" + "_" + "$outType" + "\"
-$outputPath = "$modelOutputPath" + "\$modelName" + "\"
+$outputPath = "$modelOutputPath" + "$modelName" + "\"
+$outputPathFull = "$outputPath" + "$outFolder" + "\"
+$outputModelPath = "$modelName" + "_" + "$outType"
 
-# Create output directory if it doesn't exist
-if (-not (Test-Path -Path $outputPath)) {
-    New-Item -ItemType Directory -Path $outputPath | Out-Null
+# Create output directory, delete if it exist exist
+if (Test-Path -Path "$outputPathFull") {
+    Remove-Item -Path "$outputPathFull" -Recurse -Force
 }
+New-Item -ItemType Directory -Path "$outputPathFull" | Out-Null
 
 # Generate GGUF model
-# Example: python "C:\GitHub\Llm_Api\lib\llama.cpp\convert_hf_to_gguf.py" "C:\GitHub\Llm_Api\models\latest" --outfile "c:\GitHub\Llm_Api\models\MyModel_f16\MyModel_f16.gguf" --outtype f16
-python $conversionScriptPath "$modelOutputPath\latest" --outfile "$outputPath\$outFolder\$outFile" --outtype $outType
+# TODO: handle if model path is different than latest
+python $conversionScriptPath "$modelSrcPath" --outfile "$outputPath$outFolder$outFile" --outtype $outType
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Model conversion failed." -BackgroundColor Red -ForegroundColor White
     Remove-Item -Path $modelOutputPath -Recurse -Force
+
+    Write-Host "Conversion Script Path: $conversionScriptPath (Exists: $(Test-Path $conversionScriptPath))" -ForegroundColor Yellow
+    Write-Host "Source Path: $modelSrcPath (Exists: $(Test-Path $modelSrcPath))" -ForegroundColor Yellow
+    Write-Host "Output Path: $outputPathFull (Exists: $(Test-Path ($outputPathFull)))" -ForegroundColor Yellow
+    Write-Host "Output type: $outType" -ForegroundColor Yellow
     exit 1
 }
 
@@ -57,7 +74,7 @@ if ($LASTEXITCODE -ne 0) {
 # Dokumentation: https://docs.ollama.com/modelfile#valid-parameters-and-values
 
 $defaultSystemMessage = "You are a helpful assistant."
-$modelfilePath = "$outputPath\modelfile"
+$modelfilePath = "$outputPathFull\modelfile"
 
 $systemMessage = Read-Host "Enter system message / model instruction (or leave blank for none)"
 if ([string]::IsNullOrWhiteSpace($systemMessage)) {
@@ -136,7 +153,7 @@ MESSAGE assistant yes
 ###########################################################################
 
 # Setup Script
-$setupfilePath = "$outputPath\setup.ps1"
+$setupfilePath = "$outputPathFull\setup.ps1"
 
 # Create setup file content
 $setupfileContent = @"
@@ -148,7 +165,7 @@ if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
 
 # Check if ollama is running
 try {
-    $ollamaStatus = ollama list 2>$null
+    ollama list
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Error: Ollama is installed but not running. Please start the Ollama service."
         exit 1
@@ -159,10 +176,10 @@ try {
 }
 
 # Create model in ollama
-ollama create $outFolder -f ./Modelfile
+ollama create $outputModelPath -f ./Modelfile
 
 # Run the model to verify
-ollama run $outFolder
+ollama run $outputModelPath
 "@
 
 Set-Content -Path $setupfilePath -Value $setupfileContent
@@ -170,11 +187,11 @@ Set-Content -Path $setupfilePath -Value $setupfileContent
 ###
 
 # Uninstall Script
-$uninstallFilePath = "$outputPath\uninstall.ps1"
+$uninstallFilePath = "$outputPathFull\uninstall.ps1"
 
 # Create uninstall file content
 $uninstallFileContent = @"
-ollama rm $outFolder
+ollama rm $outputModelPath
 "@
 
 Set-Content -Path $uninstallFilePath -Value $uninstallFileContent
