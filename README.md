@@ -42,11 +42,13 @@ Project is to train/tune and then export the model to *.GUFF format
 - Ollama should be installed on your target computer
 - Generated llm location must be accebel for ollama to install the model, like; local on your computer or on a network share.
 
+
 ## Setup
-- To be able to run the test service: Run `dep_download.ps1` and then `dep_install_service.ps1` to setup dependices. `dep_download.ps1` can be downloaded and moved to a computer without internet access and then installed using `dep_install_service.ps1`, just keep the folder structure.
+To be able to run the test service: Run `dep_download.ps1` and then `dep_install_service.ps1` to setup dependices. `dep_download.ps1` can be downloaded and moved to a computer without internet access and then installed using `dep_install_service.ps1`, just keep the folder structure.
 
 Refer to the [Ollama documentation](https://ollama.com/docs) for more details on remote model management.
 Refer to https://github.com/OZoneSQT/Ollama-Model-Dumper to backup/export installed ollama models
+
 
 ### Setup model (localhost)
 - In the output folder, `setup.ps1` is created to install the model on your target. Default is to install on local host.
@@ -61,7 +63,7 @@ ollama create <model-name> -f <PATH-TO-MODEL-FILE>Modelfile --host <REMOTE-IP-AD
 ```
 
 ### Uninstalling model (localhost)
-- In the output folder, `uninstall.ps1` is created to install the model on your target. Default is to install on local host.
+In the output folder, `uninstall.ps1` is created to install the model on your target. Default is to install on local host.
 
 ### Uninstalling  a Model on a Remote Ollama Instance
 To uninstall a model on an Ollama instance that is not running on localhost, you need to specify the remote server's address when using the uninstallation script or command. For example, update the uninstallation command in `uninstall.ps1` or your script to target the remote Ollama server:
