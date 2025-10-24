@@ -36,7 +36,7 @@ Project is to train/tune and then export the model to *.GUFF format
 - `exportToGGUF.ps1`: Convert generated model to *.GGUF format using the llama.cpp framework
 
 
-# Setup / Uninstal
+# Setup / Uninstall
 ## Precondision
 - PowerShell must be enabled on your system, and script files unblocked
 - Ollama should be installed on your target computer
