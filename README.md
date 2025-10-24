@@ -60,7 +60,7 @@ Replace `<REMOTE-IP-ADDRESS>` and `<PORT>` with your server's actual IP address 
 ollama create <model-name> -f <PATH-TO-MODEL-FILE>Modelfile --host <REMOTE-IP-ADDRESS>:<PORT>
 ```
 
-### Uninstalling model
+### Uninstalling model (localhost)
 - In the output folder, `uninstall.ps1` is created to install the model on your target. Default is to install on local host.
 
 ### Uninstalling  a Model on a Remote Ollama Instance
