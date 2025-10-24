@@ -2,7 +2,7 @@
 This project is a mix of smaller projects made for my own learning, testing llm and AI models
 - There is PowerShell scripts to setup dependices, for the enviorment.
 - Project is tested with Python ver. 3.13.9
-- Focus is to output models that can run on ollama, if you need to run it elseware, you probely know how to import it into your application 😈
+- Focus is to output models that can run on ollama, if you need to run it elseware, you probely know how to import it in your application 😈
 
 
 ## ApiCall
