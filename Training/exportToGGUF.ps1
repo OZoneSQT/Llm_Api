@@ -42,8 +42,13 @@ if (-not (Test-Path -Path $outputPath)) {
 }
 
 # Generate GGUF model
-# Example: # python "C:\GitHub\Llm_Api\lib\llama.cpp\convert_hf_to_gguf.py" "C:\GitHub\Llm_Api\models\latest\checkpoint-60" --outfile "c:\GitHub\Llm_Api\models\MyModel_f16\MyModel_f16.gguf" --outtype f16
+# Example: python "C:\GitHub\Llm_Api\lib\llama.cpp\convert_hf_to_gguf.py" "C:\GitHub\Llm_Api\models\latest" --outfile "c:\GitHub\Llm_Api\models\MyModel_f16\MyModel_f16.gguf" --outtype f16
 python $conversionScriptPath "$modelOutputPath\latest" --outfile "$outputPath\$outFolder\$outFile" --outtype $outType
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: Model conversion failed." -BackgroundColor Red -ForegroundColor White
+    Remove-Item -Path $modelOutputPath -Recurse -Force
+    exit 1
+}
 
 
 ###########################################################################
@@ -86,7 +91,7 @@ SYSTEM """$systemMessage"""
 "@
 
 Set-Content -Path $modelfilePath -Value $modelfileContent
-Write-Host "Modelfile created at $modelfilePath"
+
 
 <#
 
@@ -130,5 +135,55 @@ MESSAGE assistant yes
 ###########################################################################
 ###########################################################################
 
-Write-Host "GGUF model exported successfully to $outputPath\$outFolder\$outFile"
-Write-Host "Modelfile generated successfully to $modelfilePath"
+# Setup Script
+$setupfilePath = "$outputPath\setup.ps1"
+
+# Create setup file content
+$setupfileContent = @"
+# Check if ollama is installed
+if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
+    Write-Host "Error: Ollama is not installed or not in PATH."
+    exit 1
+}
+
+# Check if ollama is running
+try {
+    $ollamaStatus = ollama list 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error: Ollama is installed but not running. Please start the Ollama service."
+        exit 1
+    }
+} catch {
+    Write-Host "Error: Unable to communicate with Ollama. Please ensure it is running."
+    exit 1
+}
+
+# Create model in ollama
+ollama create $outFolder -f ./Modelfile
+
+# Run the model to verify
+ollama run $outFolder
+"@
+
+Set-Content -Path $setupfilePath -Value $setupfileContent
+
+###
+
+# Uninstall Script
+$uninstallFilePath = "$outputPath\uninstall.ps1"
+
+# Create uninstall file content
+$uninstallFileContent = @"
+ollama rm $outFolder
+"@
+
+Set-Content -Path $uninstallFilePath -Value $uninstallFileContent
+
+
+###########################################################################
+###########################################################################
+
+Write-Host "GGUF model exported successfully to $outputPath\$outFolder\$outFile" -ForegroundColor Green
+Write-Host "Modelfile generated successfully to $modelfilePath" -ForegroundColor Green
+Write-Host "Setup-file generated successfully to $setupfilePath" -ForegroundColor Green
+Write-Host "Uninstall-file generated successfully to $uninstallFilePath" -ForegroundColor Green
