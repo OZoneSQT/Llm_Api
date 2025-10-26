@@ -11,8 +11,10 @@ $conversionScriptPath = Join-Path $parentFolder "lib\\llama.cpp\\convert_hf_to_g
 $modelOutputPath = Join-Path $parentFolder "pretrained-models\\"
 $modelSrcPath = Join-Path $parentFolder "models\\latest\\"
 
+
 ###########################################################################
 ###########################################################################
+# User Input
 
 # Prompt for model name
 $modelName = Read-Host "Enter the model folder name (e.g. my-model)"
@@ -40,9 +42,34 @@ if ($validTypes -notcontains $outType) {
     $outType = Read-Host "Enter output type"
 }
 
+# Prompt for system message / model instruction
+$defaultSystemMessage = "You are a helpful assistant."
+$systemMessage = Read-Host "Enter system message / model instruction (or leave blank for none)"
+if ([string]::IsNullOrWhiteSpace($systemMessage)) {
+    $systemMessage = $defaultSystemMessage
+}
+
+
+###########################################################################
+###########################################################################
+# Handle folders and paths
+
+# Extract size parameters
+$json = Get-Content "$modelSrcPath\model.safetensors.index.json" | ConvertFrom-Json
+$size = $json.metadata.total_parameters
+if ($val -ge 1e9) {
+    $size = "{0:N2}B" -f ($size / 1e9)
+} elseif ($size -ge 1e6) {
+    $size = "{0:N2}M" -f ($size / 1e6)
+} elseif ($size -ge 1e3) {
+    $size = "{0:N2}K" -f ($size / 1e3)
+} else {
+    "$size"
+}
+
 # Set output filename (include output type)
-$outFile = "$modelName" + "_" + "$outType" + ".gguf"
-$outFolder = "$modelName" + "_" + "$outType" + "\"
+$outFile = "$modelName" + "_" + "$outType" + "_" + "$size" + ".gguf"
+$outFolder = "$modelName" + "_" + "$outType" + "_" + "$size" + "\"
 $outputPath = "$modelOutputPath" + "$modelName" + "\"
 $outputPathFull = "$outputPath" + "$outFolder" + "\"
 $outputModelPath = "$modelName" + "_" + "$outType"
@@ -53,17 +80,56 @@ if (Test-Path -Path "$outputPathFull") {
 }
 New-Item -ItemType Directory -Path "$outputPathFull" | Out-Null
 
+# Guard against missing folders
+if (-not (Test-Path -Path $conversionScriptPath)) {
+    Write-Host "Error: Conversion script not found at $conversionScriptPath" -BackgroundColor Red -ForegroundColor White
+    $conversionScriptPath = Read-Host "Enter path to conversion script (<path-to>/llama.cpp/conver_hf_to_gguf.py)"
+    
+    if (-not (Test-Path -Path $conversionScriptPath)) {
+        Write-Host "Error: Conversion script not found at $conversionScriptPath" -BackgroundColor Red -ForegroundColor White
+        exit 1
+    }
+}
+
+if (-not (Test-Path -Path $modelSrcPath)) {
+    Write-Host "Error: Model source path not found at $modelSrcPath" -BackgroundColor Red -ForegroundColor White
+    $modelSrcPath = Read-Host "Enter path to model source (e.g. ../models/my-model)"
+    
+    if (-not (Test-Path -Path $modelSrcPath)) {
+        Write-Host "Error: Model source path not found at $modelSrcPath" -BackgroundColor Red -ForegroundColor White
+        exit 1
+    }
+}
+
+if (-not (Test-Path -Path $outputPathFull)) {
+    Write-Host "Error: Output path not found at $outputPathFull" -BackgroundColor Red -ForegroundColor White
+    $outputPathFull = Read-Host "Enter path to output folder (e.g. ../models/my-model-output)"
+    
+    if (Test-Path -Path "$outputPathFull") {
+        Remove-Item -Path "$outputPathFull" -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path "$outputPathFull" | Out-Null
+
+    if (-not (Test-Path -Path $outputPathFull)) {
+        Write-Host "Error: Output path not found at $outputPathFull" -BackgroundColor Red -ForegroundColor White
+        exit 1
+    }
+}
+
+
+###########################################################################
+###########################################################################
 # Generate GGUF model
+
 # TODO: handle if model path is different than latest
 python $conversionScriptPath "$modelSrcPath" --outfile "$outputPath$outFolder$outFile" --outtype $outType
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Error: Model conversion failed." -BackgroundColor Red -ForegroundColor White
     Remove-Item -Path $modelOutputPath -Recurse -Force
-
+    Write-Host ""
     Write-Host "Conversion Script Path: $conversionScriptPath (Exists: $(Test-Path $conversionScriptPath))" -ForegroundColor Yellow
     Write-Host "Source Path: $modelSrcPath (Exists: $(Test-Path $modelSrcPath))" -ForegroundColor Yellow
     Write-Host "Output Path: $outputPathFull (Exists: $(Test-Path ($outputPathFull)))" -ForegroundColor Yellow
-    Write-Host "Output type: $outType" -ForegroundColor Yellow
     exit 1
 }
 
@@ -73,13 +139,7 @@ if ($LASTEXITCODE -ne 0) {
 # Generate Modelfile
 # Dokumentation: https://docs.ollama.com/modelfile#valid-parameters-and-values
 
-$defaultSystemMessage = "You are a helpful assistant."
 $modelfilePath = "$outputPathFull\modelfile"
-
-$systemMessage = Read-Host "Enter system message / model instruction (or leave blank for none)"
-if ([string]::IsNullOrWhiteSpace($systemMessage)) {
-    $systemMessage = $defaultSystemMessage
-}
 
 # Create modelfile content
 $modelfileContent = @"
