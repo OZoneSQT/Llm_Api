@@ -57,6 +57,7 @@ pip install glob
 pip install os
 pip install json
 pip install torch
+pip install torchvision
 pip install time
 pip install datetime
 pip install python-docx

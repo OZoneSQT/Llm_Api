@@ -43,6 +43,7 @@ pip install --upgrade glob
 pip install --upgrade os
 pip install --upgrade json
 pip install --upgrade torch
+pip install --upgrade torchvision
 pip install --upgrade time
 pip install --upgrade datetime
 pip install --upgrade python-docx
