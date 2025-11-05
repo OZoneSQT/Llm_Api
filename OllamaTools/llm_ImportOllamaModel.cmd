@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy Bypass -File ".\ImportOllamaModels.ps1"

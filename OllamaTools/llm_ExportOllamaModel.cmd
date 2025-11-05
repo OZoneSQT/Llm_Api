@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy Bypass -File ".\llm_ExportOllamaModel.ps1"
