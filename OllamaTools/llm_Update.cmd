@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy Bypass -File ".\llmOllamaUpdateAllModels.ps1"

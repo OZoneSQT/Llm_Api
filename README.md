@@ -73,3 +73,12 @@ Replace `<REMOTE-IP-ADDRESS>` and `<PORT>` with your server's actual IP address 
 ```sh
 ollama rm <model-name> --host <REMOTE-IP-ADDRESS>:<PORT>
 ```
+
+## Tools for Ollama
+`OllamaTools-folder` contains Powershell tools to manage the Ollama instance.
+`llm_BackupOllamaModel.cmd` runs `BackupOllamaModel.ps1` to Backup all installed llm models on the ollama instance, thies can also be updated for remote instances.
+`llm_ExportOllamaModel.cmd` runs `ExportOllamaModel.ps1` to Export a installed llm models on the ollama instance, thies can also be updated for remote instances.
+`llm_ImportOllamaModel.cmd` runs `ImportOllamaModel.ps1` to Import a llm models to the ollama instance, thies can also be updated for remote instances.
+`llm_Install.cmd` runs `llmOllamaInstall.ps1` to Install a predefined list of llm models on the ollama instance, thies can also be updated for remote instances.
+`llm_Update.cmd` runs `llmOllamaUpdateAllModels.cmd` to Update all installed llm models on the ollama instance, thies can also be updated for remote instances.
+`llm_Update.cmd` logs actions to `./log.csv` this includes error and warnings.
