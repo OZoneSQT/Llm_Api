@@ -1,0 +1,18 @@
+# Requirements for the Training stack (recommended minimal set)
+# Add or pin versions appropriate for your platform.
+
+numpy
+pandas
+pyyaml
+pytest
+transformers>=4.30.0
+datasets>=2.12.0
+accelerate
+peft
+sentencepiece
+tokenizers
+sentence-transformers
+tqdm
+
+# Optional (only if you plan to run GPU workloads locally)
+# torch

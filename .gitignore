@@ -425,3 +425,6 @@ FodyWeavers.xsd
 /datasets/
 /models/
 /pretrained-models/
+/legacy/
+/Scripts/
+/Training/tmp_finetune_output/

@@ -5,7 +5,6 @@ import json
 import os
 import glob
 import PyPDF2
-import PyPDF2
 import ebooklib
 from ebooklib import epub
 import mobi
