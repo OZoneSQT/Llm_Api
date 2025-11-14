@@ -209,3 +209,22 @@ Please see `Training/run-scripts/README.md` for examples and `Training/requireme
 - Expand unit coverage across the newly introduced use cases (see `Training/tests`).
 - Add structured logging helpers to remove the need for manual piping.
 - Document additional service endpoints and roll out integration tests for the RAG pipeline.
+
+## Media `run_in_acaonda.py` (wrapper)
+
+A cross-platform Python wrapper `Media/run_in_acaonda.py` replaces the older PowerShell helper `run_in_acaonda.ps1`. Use this wrapper to run repository scripts inside the `acaonda` conda environment.
+
+Usage (PowerShell):
+
+```powershell
+# Run a Media script inside the `acaonda` env
+python Media/run_in_acaonda.py Media/video_generator.py --your-args-here
+
+# Helper PowerShell wrappers in `Media/*.ps1` now call the Python wrapper and can be invoked directly, e.g.:
+.\\Media\\video_generator.ps1 --your-args-here
+```
+
+Notes:
+- If `conda` is not present on `PATH` the wrapper prints an error and exits with code `2`.
+- The wrapper is intentionally minimal; it invokes `conda run -n acaonda python <script>` and streams stdout/stderr.
+

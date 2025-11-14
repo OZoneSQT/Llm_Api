@@ -2,10 +2,14 @@
 
 # Resolve repository root (one level up from Training folder)
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$conversionScriptPath = Join-Path $repoRoot "llama.cpp\convert_hf_to_gguf.py"
+$possibleConversionPaths = @(
+    (Join-Path $repoRoot "llama.cpp\convert_hf_to_gguf.py"),
+    (Join-Path $repoRoot "lib\llama.cpp\convert_hf_to_gguf.py")
+)
 
-if (-not (Test-Path $conversionScriptPath)) {
-    Write-Host "Error: Unable to locate convert_hf_to_gguf.py at $conversionScriptPath" -ForegroundColor Red
+$conversionScriptPath = $possibleConversionPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $conversionScriptPath) {
+    Write-Host "Error: Unable to locate convert_hf_to_gguf.py. Checked: $($possibleConversionPaths -join '; ')" -ForegroundColor Red
     exit 1
 }
 

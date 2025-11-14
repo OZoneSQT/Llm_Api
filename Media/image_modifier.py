@@ -2,20 +2,20 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 import numpy as np
 from PIL import Image
 from transformers import pipeline
 
-from Media.device_utils import resolve_device, get_cache_dir
+from Media.device_utils import resolve_device, get_model_cache_path
 
 
 def load_segmenter(model_name: str, device: Optional[str] = None):
     """Create an image-segmentation pipeline."""
     selected = resolve_device(model_name, preferred=device)
-    cache_dir = get_cache_dir()
-    kwargs = {"model": model_name, "cache_dir": cache_dir}
+    cache_dir = get_model_cache_path(model_name)
+    kwargs: dict[str, Any] = {"model": model_name, "cache_dir": cache_dir}
     if selected.startswith('cuda'):
         try:
             idx = int(selected.split(':', 1)[1])

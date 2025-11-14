@@ -136,7 +136,7 @@ def resolve_device(model_name: str, preferred: Optional[str] = None) -> str:
     """Decide device string to use for model loading/runtime.
 
     - If `preferred` is provided (e.g., 'cuda:0' or 'cpu') it will be honored
-      when resources suffice.
+      when resources suffice and required hardware is available.
     - If GPU is available and has sufficient VRAM for the named model, return
       a CUDA device string (e.g., 'cuda:0'). Otherwise return 'cpu'.
     - If system RAM is insufficient for the model, raise MemoryError.
@@ -146,22 +146,30 @@ def resolve_device(model_name: str, preferred: Optional[str] = None) -> str:
     # check system RAM first
     avail_ram = _get_available_ram_mb()
     if avail_ram is not None and avail_ram < ram_required_mb:
-        raise MemoryError(f"Insufficient system RAM: {avail_ram} MB available, {ram_required_mb} MB required for {model_name}")
+        raise MemoryError(
+            f"Insufficient system RAM: {avail_ram} MB available, {ram_required_mb} MB required for {model_name}"
+        )
 
     # Honor explicit CPU preference
     if preferred and preferred.lower().startswith('cpu'):
         return 'cpu'
 
-    # Check GPU availability and VRAM across all GPUs
     gpu_vrams = _get_all_gpu_vram_mb()
+    gpu_available = bool(gpu_vrams)
+
+    # Guard: requested CUDA device but GPUs are unavailable
+    if preferred and preferred.lower().startswith('cuda') and not gpu_available:
+        return 'cpu'
+
     if gpu_vrams is not None:
+
         # honor explicit cuda index if provided
         if preferred and preferred.lower().startswith('cuda'):
             try:
                 idx = int(preferred.split(':', 1)[1])
             except Exception:
                 idx = 0
-            if idx < len(gpu_vrams) and gpu_vrams[idx] is not None:
+            if idx < len(gpu_vrams):
                 total_memory = gpu_vrams[idx]
                 if total_memory is not None and _meets_headroom(total_memory, vram_required_mb):
                     return f'cuda:{idx}'
@@ -183,12 +191,24 @@ def resolve_device(model_name: str, preferred: Optional[str] = None) -> str:
 
 
 def get_cache_dir() -> str:
-    # Prefer PathConfig for consistent repo-wide cache location
+    return _ensure_cache_base_path().as_posix()
+
+
+def get_model_cache_path(model_name: str) -> str:
+    base = _ensure_cache_base_path()
+    safe_name = model_name.replace('/', '_').replace(':', '_')
+    target = base / safe_name
+    target.mkdir(parents=True, exist_ok=True)
+    return str(target)
+
+
+def _ensure_cache_base_path() -> Path:
     try:
-        return str(PathConfig.from_env().cache_dir)
+        base = Path(PathConfig.from_env().cache_dir)
     except Exception:
-        # fallback to environment variable or sensible default
-        return os.environ.get('HF_CACHE_DIR', r'E:\\AI\\cache')
+        base = Path(os.environ.get('HF_CACHE_DIR', r'E:\\AI\\cache'))
+    base.mkdir(parents=True, exist_ok=True)
+    return base
 
 
 def _meets_headroom(total_memory_mb: int, required_mb: int) -> bool:

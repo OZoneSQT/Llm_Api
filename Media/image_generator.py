@@ -7,13 +7,13 @@ from typing import Optional
 from diffusers import StableDiffusionPipeline
 import torch
 
-from Media.device_utils import resolve_device, get_cache_dir
+from Media.device_utils import resolve_device, get_model_cache_path
 
 
 def load_pipeline(model_name: str, device: Optional[str] = None) -> StableDiffusionPipeline:
     """Instantiate a Stable Diffusion text-to-image pipeline."""
     selected = resolve_device(model_name, preferred=device)
-    cache_dir = get_cache_dir()
+    cache_dir = get_model_cache_path(model_name)
     resolved_device = selected
     dtype = torch.float16 if resolved_device.startswith("cuda") and torch.cuda.is_available() else torch.float32
     pipe = StableDiffusionPipeline.from_pretrained(

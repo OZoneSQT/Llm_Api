@@ -8,7 +8,7 @@ import torch
 from diffusers import DiffusionPipeline
 from transformers import pipeline
 
-from Media.device_utils import resolve_device, get_cache_dir
+from Media.device_utils import resolve_device, get_model_cache_path
 
 
 def resolve_device(preferred: Optional[str] = None) -> str:
@@ -29,7 +29,7 @@ def load_video_pipeline(model_name: str, device: str) -> DiffusionPipeline:
     # device selection from Media.device_utils when possible. The caller should
     # pass a resolved device (e.g. 'cuda:0' or 'cpu').
     selected = resolve_device(device)
-    cache_dir = get_cache_dir()
+    cache_dir = get_model_cache_path(model_name)
     dtype = torch.float16 if selected.startswith("cuda") else torch.float32
     pipe = DiffusionPipeline.from_pretrained(model_name, torch_dtype=dtype, cache_dir=cache_dir, local_files_only=False)
     print(f"Video pipeline: selected device={selected}, cache_dir={cache_dir}")
@@ -38,7 +38,7 @@ def load_video_pipeline(model_name: str, device: str) -> DiffusionPipeline:
 
 def load_audio_pipeline(model_name: str, device: str):
     selected = resolve_device(device)
-    cache_dir = get_cache_dir()
+    cache_dir = get_model_cache_path(model_name)
     dev = 0 if selected.startswith("cuda") else -1
     print(f"Audio pipeline: selected device={selected}, cache_dir={cache_dir}")
     return pipeline("text-to-audio", model=model_name, device=dev, cache_dir=cache_dir)

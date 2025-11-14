@@ -8,4 +8,5 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $script = Join-Path $PSScriptRoot 'image_modifier.py'
-& (Join-Path $PSScriptRoot 'run_in_acaonda.ps1') -Script $script -ScriptArgs $Args
+# Use the cross-platform Python wrapper to run inside the `acaonda` environment
+& python (Join-Path $PSScriptRoot 'run_in_acaonda.py') $script @Args
