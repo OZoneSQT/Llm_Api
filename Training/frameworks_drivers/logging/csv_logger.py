@@ -6,7 +6,7 @@ import traceback
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TextIO
 
 
 def _now_utc() -> str:
@@ -24,7 +24,7 @@ class StructuredCsvLogger:
         self.log_dir.mkdir(parents=True, exist_ok=True)
         safe_component = self.component.replace("/", "-")
         self._file_path = self.log_dir / f"{safe_component}_{self.run_id}.csv"
-        self._handle = None
+        self._handle: Optional[TextIO] = None
         self._writer: Optional[csv.DictWriter[str]] = None
 
     def _ensure_writer(self) -> csv.DictWriter[str]:

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Iterable, List
 
-from Training.tools.hf_imports import load_datasets_module
+from Training.tools.hf_datasets import load_dataset
 
 from Training.domain.entities import DatasetPreparationRequest, DatasetSpec
 
@@ -27,8 +27,6 @@ def _examples_from_iterable(ds: Iterable) -> List[dict]:
     return examples
 
 
-_hf_datasets = load_datasets_module()
-load_dataset = _hf_datasets.load_dataset
 
 
 def _load_dataset_slice(spec: DatasetSpec) -> List[dict]:

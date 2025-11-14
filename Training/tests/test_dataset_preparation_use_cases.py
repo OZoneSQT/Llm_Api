@@ -11,7 +11,7 @@ def _placeholder_load_dataset(*_args, **_kwargs):
     raise RuntimeError("load_dataset stub not patched")
 
 
-dummy_datasets_module.load_dataset = _placeholder_load_dataset
+setattr(dummy_datasets_module, 'load_dataset', _placeholder_load_dataset)
 sys.modules.setdefault("datasets", dummy_datasets_module)
 
 

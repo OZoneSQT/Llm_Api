@@ -20,7 +20,7 @@ def make_fake_torch(cuda_available: bool, vram_mbs: Iterable[Optional[int]]):
 
     def get_device_properties(idx: int):
         class Props:
-            total_memory = vram_list[idx] * 1024 * 1024
+            total_memory = (vram_list[idx] or 0) * 1024 * 1024
 
         return Props()
 

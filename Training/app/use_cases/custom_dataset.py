@@ -37,7 +37,7 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover
     mobi = None  # type: ignore
 
-from Training.tools.hf_imports import load_datasets_module
+from Training.tools.hf_datasets import Dataset
 
 from Training.app.use_cases.sanitization import sanitize_dataset
 from Training.domain.entities import (
@@ -52,8 +52,6 @@ except Exception:  # pragma: no cover - optional dependency may not exist
     textract = None
 
 
-_hf_datasets = load_datasets_module()
-Dataset = _hf_datasets.Dataset
 
 
 def _collect_csv_samples(source_dir: Path) -> list[str]:
@@ -78,8 +76,8 @@ def _collect_csv_samples(source_dir: Path) -> list[str]:
                 else:
                     handle.seek(0)
                     raw_reader = csv.reader(handle)
-                    for row in raw_reader:
-                        parts = [cell.strip() for cell in row if cell and cell.strip()]
+                    for raw_row in raw_reader:
+                        parts = [cell.strip() for cell in raw_row if cell and cell.strip()]
                         if parts:
                             samples.append(' | '.join(parts))
         except Exception as exc:  # pragma: no cover - best effort ingestion

@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 from typing import Iterable
 
-from Training.tools.hf_imports import load_datasets_module
+from Training.tools.hf_datasets import Dataset, load_from_disk
 
 from Training.domain.entities import SanitizationRequest, SanitizationResult
 
@@ -65,9 +65,6 @@ _FLAG_PHRASES = (
 
 _COMPILED_PATTERNS = tuple(re.compile(pattern, re.IGNORECASE) for pattern in _FLAG_PHRASES)
 
-_hf_datasets = load_datasets_module()
-Dataset = _hf_datasets.Dataset
-load_from_disk = _hf_datasets.load_from_disk
 
 
 def _excerpt(text: str, length: int = 300) -> str:

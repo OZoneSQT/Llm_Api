@@ -682,27 +682,35 @@ def download_repo(
     )
 
     try:
-        kwargs = {
-            'repo_id': repo_id,
-            'revision': None,
-            'cache_dir': str(cache_dir),
-            'allow_patterns': None,
-            'ignore_patterns': None,
-            'repo_type': repo_type,
-            'resume_download': True,
-        }
-        if not cache_only:
-            kwargs['local_dir'] = str(destination)
-            kwargs['local_dir_use_symlinks'] = False
-        if force_download:
-            kwargs['force_download'] = True
-
+        local_dir = None if cache_only else str(destination)
         if tqdm and not no_spinner:
             with tqdm(desc=f'Downloading {repo_id}', unit='file') as progress:
-                snapshot_path = snapshot_download(**kwargs)
+                snapshot_path = snapshot_download(
+                    repo_id=repo_id,
+                    revision=None,
+                    cache_dir=str(cache_dir),
+                    allow_patterns=None,
+                    ignore_patterns=None,
+                    repo_type=repo_type,
+                    resume_download=True,
+                    local_dir=local_dir,
+                    local_dir_use_symlinks=False,
+                    force_download=force_download,
+                )
                 progress.update(1)
         else:
-            snapshot_path = snapshot_download(**kwargs)
+            snapshot_path = snapshot_download(
+                repo_id=repo_id,
+                revision=None,
+                cache_dir=str(cache_dir),
+                allow_patterns=None,
+                ignore_patterns=None,
+                repo_type=repo_type,
+                resume_download=True,
+                local_dir=local_dir,
+                local_dir_use_symlinks=False,
+                force_download=force_download,
+            )
 
         resolved_path = Path(snapshot_path) if cache_only else destination
         print('SUCCESS:', repo_id, '->', resolved_path)

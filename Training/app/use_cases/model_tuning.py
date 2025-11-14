@@ -4,26 +4,25 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 import torch  # type: ignore
-from Training.tools.hf_imports import load_datasets_module
+from Training.tools.hf_datasets import Dataset, concatenate_datasets, load_dataset, load_from_disk
 from transformers import (  # type: ignore
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    Trainer,
-    TrainingArguments,
+    AutoModelForSequenceClassification as _AutoModelForSequenceClassification,
+    AutoTokenizer as _AutoTokenizer,
+    Trainer as _Trainer,
+    TrainingArguments as _TrainingArguments,
 )
 
 from Training.domain.entities import ModelTuningRequest, ModelTuningResult
 from Training.tools import paths as path_utils
 from Training.tools.adapter_utils import load_model as adapter_load_model, load_tokenizer as adapter_load_tokenizer
 
-
-_hf_datasets = load_datasets_module()
-Dataset = _hf_datasets.Dataset
-concatenate_datasets = _hf_datasets.concatenate_datasets
-load_dataset = _hf_datasets.load_dataset
-load_from_disk = _hf_datasets.load_from_disk
+AutoModelForSequenceClassification: Any = _AutoModelForSequenceClassification
+AutoTokenizer: Any = _AutoTokenizer
+Trainer: Any = _Trainer
+TrainingArguments: Any = _TrainingArguments
 
 
 def _read_config(config_path: Path) -> dict:

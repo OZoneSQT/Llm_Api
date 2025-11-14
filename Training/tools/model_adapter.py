@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 import shutil
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, cast
 
 
 def _detect_gptq(model_path: Path) -> bool:
@@ -63,7 +63,7 @@ def _patch_config_rope_scaling(model_path: Path) -> Tuple[bool, Optional[Path]]:
         return False, None
     try:
         with open(cfg_path, 'r', encoding='utf-8') as f:
-            cfg = json.load(f)
+            cfg = cast(Dict[str, Any], json.load(f))
     except Exception:
         return False, None
 
@@ -76,8 +76,10 @@ def _patch_config_rope_scaling(model_path: Path) -> Tuple[bool, Optional[Path]]:
         return False, None
 
     # Normalize
-    factor = rs.get('factor') or rs.get('high_freq_factor') or rs.get('low_freq_factor') or 1.0
-    rope_type = (rs.get('rope_type') or rs.get('type') or 'rope')
+    rs_dict = cast(Dict[str, Any], rs)
+    factor_value: Any = rs_dict.get('factor') or rs_dict.get('high_freq_factor') or rs_dict.get('low_freq_factor') or 1.0
+    rope_type = (rs_dict.get('rope_type') or rs_dict.get('type') or 'rope')
+    factor = float(factor_value)
     rt = str(rope_type).lower()
     if 'llama' in rt:
         typ = 'dynamic'
@@ -86,7 +88,7 @@ def _patch_config_rope_scaling(model_path: Path) -> Tuple[bool, Optional[Path]]:
     else:
         typ = 'linear'
 
-    cfg['rope_scaling'] = {'type': typ, 'factor': float(factor)}
+    cfg['rope_scaling'] = {'type': typ, 'factor': factor}
 
     # Backup and write
     backup = model_path / 'config.json.bak_adapter'
@@ -114,7 +116,7 @@ def _restore_backup(backup: Path, cfg_path: Path):
         pass
 
 
-def _detect_family_from_path(model_path: Path) -> Optional[str]:
+def detect_family_from_path(model_path: Path) -> Optional[str]:
     name = model_path.name.lower()
     # Recognize families explicitly. Order matters (dolphin is its own family).
     if 'dolphin' in name or name.startswith('dphn_'):
@@ -126,6 +128,9 @@ def _detect_family_from_path(model_path: Path) -> Optional[str]:
     if 'gemma' in name:
         return 'gemma'
     return 'generic'
+
+
+__all__ = ['detect_family_from_path', 'load_with_adapter']
 
 
 def load_with_adapter(model_path: str, family: Optional[str] = None, commit_patch: bool = False,
@@ -150,7 +155,7 @@ def load_with_adapter(model_path: str, family: Optional[str] = None, commit_patc
     if not mp.exists():
         raise FileNotFoundError(f"Model path not found: {mp}")
 
-    fam = family or _detect_family_from_path(mp)
+    fam = family or detect_family_from_path(mp)
 
     patched = False
     backup = None
@@ -292,7 +297,7 @@ def load_with_adapter(model_path: str, family: Optional[str] = None, commit_patc
                 ) from e
             raise
 
-        meta = {'family': fam, 'patched': patched}
+        meta: Dict[str, Any] = {'family': fam, 'patched': patched}
         if warnings:
             meta['warnings'] = warnings
         return tokenizer, model, meta

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Mapping
 
-def use_adapter_enabled(env: dict) -> bool:
+def use_adapter_enabled(env: Mapping[str, str]) -> bool:
     value = env.get('USE_ADAPTER', '')
     return value.lower() in ('1', 'true', 'yes')
 
 
-def load_with_adapter(name_or_path: str, loader: Optional[Callable], env: dict, local_files_only: bool, **kwargs):
+def load_with_adapter(name_or_path: str, loader: Optional[Callable], env: Mapping[str, str], local_files_only: bool, **kwargs):
     if use_adapter_enabled(env):
         try:
             from Training.tools.model_adapter import load_with_adapter as repo_adapter

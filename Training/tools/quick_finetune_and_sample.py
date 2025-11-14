@@ -9,6 +9,7 @@ Run this script from repository root with the same Python that runs training.
 """
 import os
 import argparse
+import importlib
 # Decide whether to force CPU. Priority: CLI arg -> ENV FORCE_CPU -> config file 'force_cpu' -> default False
 parser = argparse.ArgumentParser(description='Quick smoke finetune and sample')
 parser.add_argument('--model', help='Override model name from config', default=None)
@@ -95,16 +96,16 @@ local_model_path = args.local_path or cfg.get("local_model_path")
 sanitized_dirs = sorted(glob.glob(str(ROOT / "datasets" / "sanitized_dataset_*")))
 custom_dirs = sorted(glob.glob(str(ROOT / "datasets" / "custom_dataset_*")))
 if sanitized_dirs:
-    ds_path = sanitized_dirs[-1]
-    print(f"Selected sanitized dataset: {ds_path}")
+    selected_dataset_path = sanitized_dirs[-1]
+    print(f"Selected sanitized dataset: {selected_dataset_path}")
 elif custom_dirs:
-    ds_path = custom_dirs[-1]
-    print(f"Selected custom dataset: {ds_path}")
+    selected_dataset_path = custom_dirs[-1]
+    print(f"Selected custom dataset: {selected_dataset_path}")
 else:
     raise SystemExit("No dataset found under datasets/ (sanitized_dataset_* or custom_dataset_*)")
 
 print("Loading dataset (disk)...")
-dataset = Dataset.load_from_disk(ds_path)
+dataset = Dataset.load_from_disk(selected_dataset_path)
 print(f"Loaded dataset with {len(dataset)} examples")
 
 # take small subset for smoke-test
@@ -120,6 +121,8 @@ try:
     patch_path = Path(__file__).resolve().parents[0] / 'rotary_inference_patch.py'
     if patch_path.exists():
         spec = util.spec_from_file_location('rotary_inference_patch', str(patch_path))
+        if spec is None or spec.loader is None:
+            raise ImportError('Unable to load rotary inference patch spec')
         mod = util.module_from_spec(spec)
         spec.loader.exec_module(mod)  # type: ignore
 except Exception:
@@ -529,8 +532,9 @@ training_args = TrainingArguments(
 )
 # Attach DeepSpeed config to TrainingArguments if provided or if CPU-offload was requested
 if getattr(args, 'deepspeed_config', None) or args.offload_cpu:
-    if getattr(args, 'deepspeed_config', None):
-        ds_path = Path(args.deepspeed_config)
+    ds_config = getattr(args, 'deepspeed_config', None)
+    if ds_config:
+        ds_path = Path(ds_config)
         if ds_path.exists():
             try:
                 training_args.deepspeed = str(ds_path)
@@ -593,13 +597,16 @@ print(generated)
 
 # Safety post-processing: check against a simple blocklist and save the sample to disk for regression tests
 try:
-    from .safety_check import load_blocklist, contains_blocked
+    _safety_module = importlib.import_module('Training.tools.safety_check')
 except Exception:
-    # fallback if run as script from root
-    from safety_check import load_blocklist, contains_blocked
+    # fallback if run from repo root without package context
+    _safety_module = importlib.import_module('safety_check')
 
-blk = load_blocklist(TRAINING / 'data' / 'banned_words.txt')
-if contains_blocked(generated, blk):
+_load_blocklist = _safety_module.load_blocklist
+_contains_blocked = _safety_module.contains_blocked
+
+blk = _load_blocklist(TRAINING / 'data' / 'banned_words.txt')
+if _contains_blocked(generated, blk):
     print('\n*** WARNING: Generated sample contains blocked phrases from banned_words.txt ***')
     # sanitize by redacting blocked phrases so saved sample and tests don't fail catastrophically
     import re

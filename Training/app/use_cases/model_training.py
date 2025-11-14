@@ -5,28 +5,27 @@ import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 import torch  # type: ignore
-from Training.tools.hf_imports import load_datasets_module
+from Training.tools.hf_datasets import Dataset, concatenate_datasets, load_dataset, load_from_disk
 from transformers import (  # type: ignore
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    DataCollatorForLanguageModeling,
-    Trainer,
-    TrainingArguments,
+    AutoModelForCausalLM as _AutoModelForCausalLM,
+    AutoTokenizer as _AutoTokenizer,
+    DataCollatorForLanguageModeling as _DataCollatorForLanguageModeling,
+    Trainer as _Trainer,
+    TrainingArguments as _TrainingArguments,
 )
 
 from Training.domain.entities import ModelTrainingRequest, ModelTrainingResult
 from Training.tools import paths as path_utils
 from Training.tools.adapter_utils import load_model as adapter_load_model, load_tokenizer as adapter_load_tokenizer
 
-
-_hf_datasets = load_datasets_module()
-Dataset = _hf_datasets.Dataset
-concatenate_datasets = _hf_datasets.concatenate_datasets
-load_dataset = _hf_datasets.load_dataset
-load_from_disk = _hf_datasets.load_from_disk
+AutoModelForCausalLM: Any = _AutoModelForCausalLM
+AutoTokenizer: Any = _AutoTokenizer
+DataCollatorForLanguageModeling: Any = _DataCollatorForLanguageModeling
+Trainer: Any = _Trainer
+TrainingArguments: Any = _TrainingArguments
 
 
 @dataclass
@@ -172,7 +171,8 @@ def _select_device() -> str:
         return 'mps'
     if getattr(torch, 'has_mps', False):
         return 'mps'
-    if getattr(torch.backends, 'opencl', None) and torch.backends.opencl.is_available():
+    opencl_backend = getattr(torch.backends, 'opencl', None)
+    if opencl_backend and opencl_backend.is_available():
         return 'opencl'
     return 'cpu'
 

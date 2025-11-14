@@ -6,10 +6,10 @@ from Training.tools import model_adapter
 
 
 def test_detect_family_from_path():
-    assert model_adapter._detect_family_from_path(Path('E:/Models/meta-llama_Llama-3.2-1B')) == 'meta-llama'
-    assert model_adapter._detect_family_from_path(Path('E:/Models/Qwen_Qwen3-1.7B')) == 'qwen'
-    assert model_adapter._detect_family_from_path(Path('E:/Models/gemma_Gemma-1B')) == 'gemma'
-    assert model_adapter._detect_family_from_path(Path('E:/Models/dphn_Dolphin3.0-Llama3.2-1B')) == 'dolphin'
+    assert model_adapter.detect_family_from_path(Path('E:/Models/meta-llama_Llama-3.2-1B')) == 'meta-llama'
+    assert model_adapter.detect_family_from_path(Path('E:/Models/Qwen_Qwen3-1.7B')) == 'qwen'
+    assert model_adapter.detect_family_from_path(Path('E:/Models/gemma_Gemma-1B')) == 'gemma'
+    assert model_adapter.detect_family_from_path(Path('E:/Models/dphn_Dolphin3.0-Llama3.2-1B')) == 'dolphin'
 
 
 @pytest.mark.skipif(os.environ.get('RUN_SMOKE_TESTS') != '1', reason='Smoke tests disabled; set RUN_SMOKE_TESTS=1 to enable')
