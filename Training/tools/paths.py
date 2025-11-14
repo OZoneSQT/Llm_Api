@@ -3,7 +3,7 @@
 Prefer reading values from environment variables so users can override defaults:
 - HF_MODEL_ROOT (default: E:\\AI\\Models)
 - HF_DATA_ROOT  (default: E:\\AI\\Datasets)
-- HF_CACHE_DIR  (default: E:\\AI\\_hf_cache)
+- HF_CACHE_DIR  (default: E:\\AI\\cache)
 - HF_LOG_DIR    (default: E:\\AI\\Logs)
 
 Import these values from scripts that need to read/write model or dataset folders.

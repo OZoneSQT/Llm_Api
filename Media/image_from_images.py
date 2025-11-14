@@ -8,14 +8,22 @@ from PIL import Image
 from diffusers import StableDiffusionImg2ImgPipeline
 import torch
 
+from Media.device_utils import resolve_device, get_cache_dir
+
 
 def load_pipeline(model_name: str, device: Optional[str] = None) -> StableDiffusionImg2ImgPipeline:
     """Instantiate the Stable Diffusion Img2Img pipeline."""
+    selected = resolve_device(model_name, preferred=device)
+    cache_dir = get_cache_dir()
+    resolved_device = selected
+    dtype = torch.float16 if resolved_device.startswith("cuda") and torch.cuda.is_available() else torch.float32
     pipeline_kwargs = {
-        "torch_dtype": torch.float16 if torch.cuda.is_available() else torch.float32,
+        "torch_dtype": dtype,
+        "cache_dir": cache_dir,
+        "local_files_only": False,
     }
     pipe = StableDiffusionImg2ImgPipeline.from_pretrained(model_name, **pipeline_kwargs)
-    resolved_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Img2Img pipeline: selected device={selected}, cache_dir={cache_dir}")
     return pipe.to(resolved_device)
 
 

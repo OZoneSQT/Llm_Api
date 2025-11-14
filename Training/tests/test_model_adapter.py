@@ -29,7 +29,7 @@ def test_smoke_load_with_adapter_qwen():
         if snap is not None:
             candidates.append(snap)
     except Exception:
-        cache_root = Path('E:/AI/_hf_cache')
+        cache_root = Path('E:/AI/cache')
         if cache_root.exists():
             for entry in cache_root.rglob('*'):
                 if entry.is_dir() and 'qwen' in entry.name.lower():
@@ -61,7 +61,7 @@ def test_smoke_load_with_adapter_meta_llama():
         if snap is not None:
             candidates.append(snap)
     except Exception:
-        cache_root = Path('E:/AI/_hf_cache')
+        cache_root = Path('E:/AI/cache')
         if cache_root.exists():
             for entry in cache_root.rglob('*'):
                 if entry.is_dir() and 'meta-llama' in entry.name.lower():

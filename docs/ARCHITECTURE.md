@@ -16,7 +16,7 @@ graph LR
     UseCase[Use Cases: app/use_cases/*]
   end
   subgraph Domain
-    Domain[Domain Entities & PathConfig: domain/*]
+    DomainEntities[Domain Entities & PathConfig: domain/*]
   end
   subgraph Drivers
     FS[Filesystem / HF Cache]
@@ -27,7 +27,7 @@ graph LR
   click CLI "./Training/frameworks_drivers/cli" "Open CLI folder"
   click Controller "./Training/interface_adapters/controllers" "Open Controllers"
   click UseCase "./Training/app/use_cases" "Open Use Cases"
-  click Domain "./Training/domain" "Open Domain"
+  click DomainEntities "./Training/domain" "Open Domain"
 ```
 
 ## Dataset Generation Sequence (Mermaid Sequence Diagram)

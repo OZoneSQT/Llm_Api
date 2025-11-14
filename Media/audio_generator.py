@@ -5,13 +5,26 @@ from pathlib import Path
 from typing import Optional
 
 from transformers import pipeline
+from Media.device_utils import resolve_device, get_cache_dir
 
 
 def create_tts_pipeline(model_name: str, device: Optional[str] = None):
     """Create a reusable text-to-speech pipeline."""
-    pipeline_kwargs = {"model": model_name}
-    if device is not None:
-        pipeline_kwargs["device"] = device
+    # determine runtime device and HF cache dir
+    selected = resolve_device(model_name, preferred=device)
+    cache_dir = get_cache_dir()
+    pipeline_kwargs = {"model": model_name, "cache_dir": cache_dir}
+    # transformers.pipeline accepts device as int or str; prefer cpu or int for cuda
+    if selected.startswith('cuda'):
+        # attempt to use device index integer for pipeline
+        try:
+            idx = int(selected.split(':', 1)[1])
+            pipeline_kwargs["device"] = idx
+        except Exception:
+            pipeline_kwargs["device"] = 0
+    else:
+        pipeline_kwargs["device"] = -1
+    print(f"TTS: selected device={selected}, cache_dir={cache_dir}")
     return pipeline("text-to-speech", **pipeline_kwargs)
 
 

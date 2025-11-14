@@ -87,9 +87,7 @@ def _collect_csv_samples(source_dir: Path) -> list[str]:
     return samples
 
 
-                                    # Write dataset metadata for downstream validation/inspection
-                                    from Training.app.use_cases.validate_dataset import write_metadata
-                                    write_metadata(output_path, metadata)
+def _collect_txt_samples(source_dir: Path) -> list[str]:
     samples: list[str] = []
     for txt_path in glob.glob(str(source_dir / '*.txt')) + glob.glob(str(source_dir / '*.TXT')):
         with open(txt_path, 'r', encoding='utf-8') as handle:

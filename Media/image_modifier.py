@@ -8,12 +8,23 @@ import numpy as np
 from PIL import Image
 from transformers import pipeline
 
+from Media.device_utils import resolve_device, get_cache_dir
+
 
 def load_segmenter(model_name: str, device: Optional[str] = None):
     """Create an image-segmentation pipeline."""
-    kwargs = {"model": model_name}
-    if device is not None:
-        kwargs["device"] = device
+    selected = resolve_device(model_name, preferred=device)
+    cache_dir = get_cache_dir()
+    kwargs = {"model": model_name, "cache_dir": cache_dir}
+    if selected.startswith('cuda'):
+        try:
+            idx = int(selected.split(':', 1)[1])
+            kwargs["device"] = idx
+        except Exception:
+            kwargs["device"] = 0
+    else:
+        kwargs["device"] = -1
+    print(f"Image segmenter: selected device={selected}, cache_dir={cache_dir}")
     return pipeline("image-segmentation", **kwargs)
 
 
@@ -22,7 +33,9 @@ def apply_transparency(image: Image.Image, masks: Iterable[np.ndarray]) -> Image
     rgba = image.convert("RGBA")
     data = np.array(rgba)
     for mask in masks:
-        data[mask == 1] = [0, 0, 0, 0]
+        mask_array = np.asarray(mask) > 0
+        if mask_array.any():
+            data[mask_array] = [0, 0, 0, 0]
     return Image.fromarray(data)
 
 

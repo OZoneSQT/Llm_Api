@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Cross-platform pre-push hook wrapper.
+# Prefers PowerShell runner (`scripts/run_prepush_tests.ps1`) when PowerShell is available,
+# otherwise falls back to running `python -m pytest`.
+
+set -e
+echo "pre-push: running test suite..."
+
+# resolve repo root
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "$(pwd)")
+
+if command -v pwsh >/dev/null 2>&1; then
+  pwsh -NoProfile -ExecutionPolicy Bypass -File "$REPO_ROOT/scripts/run_prepush_tests.ps1"
+  exit $?
+fi
+
+if command -v powershell >/dev/null 2>&1; then
+  powershell -NoProfile -ExecutionPolicy Bypass -File "$REPO_ROOT/scripts/run_prepush_tests.ps1"
+  exit $?
+fi
+
+if command -v python >/dev/null 2>&1; then
+  echo "No PowerShell found; running tests with python..."
+  python -m pytest -q
+  rc=$?
+  if [ $rc -ne 0 ]; then
+    echo "Tests failed. Aborting push."
+    exit $rc
+  fi
+  echo "Tests passed."
+  exit 0
+fi
+
+echo "No suitable runtime found for running tests; skipping tests and allowing push."
+exit 0

@@ -6,6 +6,8 @@ from pathlib import Path
 
 from huggingface_hub import InferenceClient
 
+from Media.device_utils import get_cache_dir, resolve_device
+
 
 def build_client(token: str) -> InferenceClient:
     if not token:
@@ -15,6 +17,9 @@ def build_client(token: str) -> InferenceClient:
 
 def generate_video(prompt: str, output_path: Path, model_name: str, num_frames: int, fps: int, token: str) -> Path:
     client = build_client(token=token)
+    # InferenceClient uses hosted models; still provide cache_dir info for local fallbacks
+    cache_dir = get_cache_dir()
+    print(f"Video generation (remote): model={model_name}, cache_dir={cache_dir}")
     response = client.text_to_video(model=model_name, inputs={"prompt": prompt, "num_frames": num_frames, "fps": fps})
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_bytes(response)

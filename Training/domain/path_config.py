@@ -32,7 +32,8 @@ class PathConfig:
     def from_env(cls) -> "PathConfig":
         model_root = cls._resolve_env('HF_MODEL_ROOT', r'E:\AI\Models')
         data_root = cls._resolve_env('HF_DATA_ROOT', r'E:\AI\Datasets')
-        cache_dir = cls._resolve_env('HF_CACHE_DIR', r'E:\AI\_hf_cache')
+        # Use E:\AI\cache as the canonical cache location (user requested)
+        cache_dir = cls._resolve_env('HF_CACHE_DIR', r'E:\\AI\\cache')
         log_dir = cls._resolve_env('HF_LOG_DIR', r'E:\AI\Logs')
         for path in (model_root, data_root, cache_dir, log_dir):
             try:

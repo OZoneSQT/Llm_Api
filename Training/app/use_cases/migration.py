@@ -14,9 +14,11 @@ LEGACY_PATHS: Tuple[Tuple[str, str], ...] = (
     (r"E:\Models", 'models'),
     (r"E:\Datasets", 'datasets'),
     (r"E:\_hf_cache", 'cache'),
+    (r"E:\cache", 'cache'),
     (r"E:\AI\Models", 'models'),
     (r"E:\AI\Datasets", 'datasets'),
     (r"E:\AI\_hf_cache", 'cache'),
+    (r"E:\AI\cache", 'cache'),
     (r"E:\HF\Models", 'models'),
     (r"E:\HF\Cache", 'cache'),
 )

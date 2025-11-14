@@ -8,8 +8,13 @@ import torch
 from diffusers import DiffusionPipeline
 from transformers import pipeline
 
+from Media.device_utils import resolve_device, get_cache_dir
+
 
 def resolve_device(preferred: Optional[str] = None) -> str:
+    # preserve legacy signature by delegating to device_utils
+    # default to a conservative model_name for VRAM checks if none provided
+    # When called without a model, prefer GPU if available otherwise CPU.
     if preferred:
         return preferred
     if torch.cuda.is_available():
@@ -20,13 +25,23 @@ def resolve_device(preferred: Optional[str] = None) -> str:
 
 
 def load_video_pipeline(model_name: str, device: str) -> DiffusionPipeline:
-    dtype = torch.float16 if device.startswith("cuda") else torch.float32
-    pipe = DiffusionPipeline.from_pretrained(model_name, torch_dtype=dtype)
-    return pipe.to(device)
+    # We still accept a resolved device string from caller, but prefer the
+    # device selection from Media.device_utils when possible. The caller should
+    # pass a resolved device (e.g. 'cuda:0' or 'cpu').
+    selected = resolve_device(device)
+    cache_dir = get_cache_dir()
+    dtype = torch.float16 if selected.startswith("cuda") else torch.float32
+    pipe = DiffusionPipeline.from_pretrained(model_name, torch_dtype=dtype, cache_dir=cache_dir, local_files_only=False)
+    print(f"Video pipeline: selected device={selected}, cache_dir={cache_dir}")
+    return pipe.to(selected)
 
 
 def load_audio_pipeline(model_name: str, device: str):
-    return pipeline("text-to-audio", model=model_name, device=0 if device.startswith("cuda") else -1)
+    selected = resolve_device(device)
+    cache_dir = get_cache_dir()
+    dev = 0 if selected.startswith("cuda") else -1
+    print(f"Audio pipeline: selected device={selected}, cache_dir={cache_dir}")
+    return pipeline("text-to-audio", model=model_name, device=dev, cache_dir=cache_dir)
 
 
 def generate_video_frames(video_pipe: DiffusionPipeline, prompt: str, steps: int) -> list:
