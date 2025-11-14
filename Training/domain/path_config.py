@@ -55,7 +55,7 @@ class PathConfig:
 
     @staticmethod
     def _cache_snapshot_dir(cache_dir: Path, repo_id: str, repo_type: RepoTypeOptional) -> Path:
-        prefix_map = {
+        prefix_map: dict[RepoTypeOptional, str] = {
             None: 'models',
             'model': 'models',
             'dataset': 'datasets',
